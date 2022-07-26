@@ -8,14 +8,20 @@ from termcolor import colored
 class GameRoom:
     def __init__(self):
         self.boards = []
+        self.callouts = []
 
-    def initialize_from_file(self, filename):
+    def initialize_boards_from_file(self, filename):
         with open(filename, 'r') as f:
             text = f.read()
         for t in text.split('\n\n'):
             gb = GameBoard()
             gb.initialize_from_text_grid(t)
             self.boards.append(gb)
+
+    def initialize_callout_list_from_file(self, filename):
+        with open(filename, 'r') as f:
+            list = f.read().strip().split(',')
+            self.callouts = [int(x) for x in list]
 
     def call_out(self, number):
         bingos = []
@@ -25,6 +31,15 @@ class GameRoom:
                     bingos.append(gb)
         return bingos
 
+    def play(self, boards_filename, callout_filename):
+        self.initialize_boards_from_file(boards_filename)
+        self.initialize_callout_list_from_file(callout_filename)
+        for call in self.callouts:
+            for board in self.boards:
+                board.handle_call(call)
+                if board.is_winner():
+                    return board
+        return None
 
 class GameBoard:
     def __init__(self):
@@ -33,20 +48,26 @@ class GameBoard:
                       [Tile(), Tile(), Tile(), Tile(), Tile()],
                       [Tile(), Tile(), Tile(), Tile(), Tile()],
                       [Tile(), Tile(), Tile(), Tile(), Tile()]]
+        self.winning_number = 0
 
     def __repr__(self):
-        return f'GameBoard(\n{self.render()})'
+        return f'GameBoard({self.render()})'
 
     def render(self):
         rval = []
+        if self.winning_number:
+            rval.append(colored(f'{self.calculate_score()}', 'red', 'on_white'))
+            rval.append('\n')
+        else:
+            rval.append('\n')
         for i, row in enumerate(self.board):
             for tile in row:
-                if tile.marked:
+                if tile.number == self.winning_number:
+                    rval.append(colored(f'{tile.number:2} ', 'red', 'on_grey'))
+                elif tile.marked:
                     rval.append(colored(f'{tile.number:2} ', 'green', 'on_grey'))
                 else:
                     rval.append(f'{tile.number:2} ')
-                if tile.marked:
-                    rval.append('\033[0m')
             if i < 4:
                 rval.append('\n')
         return ''.join(rval)
@@ -69,7 +90,9 @@ class GameBoard:
             for col in range(5):
                 if self.board[row][col].number == tile_number:
                     self.board[row][col].marked = True
-                    return True
+                    if self.is_winner():
+                        self.winning_number = tile_number
+                    return True # True if tile was marked
         return False
 
     def is_winner(self):
@@ -111,6 +134,15 @@ class GameBoard:
             return True
         return False
 
+    def calculate_score(self):
+        if not self.winning_number:
+            raise Exception(f'Cannot calculate score without a winning number {self}')
+        sum = 0
+        for row in range(5):
+            for col in range(5):
+                if not self.board[row][col].marked:
+                    sum += self.board[row][col].number
+        return self.winning_number * sum
 
 class Tile:
     def __init__(self, number=0, marked=False):
@@ -185,6 +217,17 @@ class TestGameBoard(unittest.TestCase):
         self.gb.board[4][0].marked = True
         self.assertTrue(self.gb.is_winner())
 
+    def test_calculate_score(self):
+        self.gb.handle_call(85)
+        self.gb.handle_call(35)
+        self.gb.handle_call(52)
+        self.gb.handle_call(26)
+        self.gb.handle_call(68)
+        self.assertTrue(self.gb.is_winner())
+        self.assertEqual(68, self.gb.winning_number)
+        score = self.gb.calculate_score()
+        self.assertEqual(77928, score)
+
 
 class TestTile(unittest.TestCase):
     def test_tile(self):
@@ -194,13 +237,13 @@ class TestTile(unittest.TestCase):
 class TestGameRoom(unittest.TestCase):
     def test_game_room(self):
         gr = GameRoom()
-        gr.initialize_from_file('bingo_boards.txt')
+        gr.initialize_boards_from_file('bingo_boards.txt')
         self.assertEqual(100, len(gr.boards))
         self.assertEqual(66, gr.boards[0].board[0][0].number)
 
     def test_call_out(self):
         gr = GameRoom()
-        gr.initialize_from_file('bingo_boards.txt')
+        gr.initialize_boards_from_file('bingo_boards.txt')
         numbers = [66, 78, 7, 45, 92]
         for i, n in enumerate(numbers):
             bingos = gr.call_out(n)
@@ -208,6 +251,20 @@ class TestGameRoom(unittest.TestCase):
                 self.assertFalse(bingos)
             else:
                 self.assertTrue(bingos)
+        self.assertEqual(92, bingos[0].winning_number)
+
+    def test_play(self):
+        gr = GameRoom()
+        winner = gr.play('bingo_boards.txt', 'bingo_calls.txt')
+        self.assertTrue(winner)
+        print(winner)
+
+    def test_initialize_callout_list_from_file(self):
+        gr = GameRoom()
+        gr.initialize_callout_list_from_file('bingo_calls.txt')
+        self.assertEqual(37, gr.callouts[0])
+        self.assertEqual(60, gr.callouts[1])
+        self.assertEqual(79, gr.callouts[-1])
 
 if __name__ == '__main__':
     unittest.main()
