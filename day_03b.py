@@ -176,14 +176,14 @@ class TestDiagnostics(unittest.TestCase):
         oxygen_generator_rating = int(diags[0], 2)
         # self.assertEqual(23, oxygen_generator_rating)
 
-        diags = load_all_diagnostics('diagnostic_short_03.txt')
-        dt = tally_the_digits_in_memory(diags, 5)
+        diags = load_all_diagnostics('diagnostic_03.txt')
+        dt = tally_the_digits_in_memory(diags, 12)
         bsv = translate_tally_to_binary_string_value(dt)
         for i in range(len(bsv)):
             diags = filter_by_bit(diags, bsv[i], i, True)
             if len(diags) < 2:
                 break
-            dt = tally_the_digits_in_memory(diags, 5)
+            dt = tally_the_digits_in_memory(diags, 12)
             bsv = translate_tally_to_binary_string_value(dt)
         if len(diags) != 1:
             raise Exception(f'Was expecting len of 1 but found {len(diags)}')
@@ -191,6 +191,7 @@ class TestDiagnostics(unittest.TestCase):
         # self.assertEqual(10, co2_scrubber_rating)
 
         print(oxygen_generator_rating, co2_scrubber_rating)
+        print(oxygen_generator_rating * co2_scrubber_rating)
 
 
 
