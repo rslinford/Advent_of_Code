@@ -1,13 +1,14 @@
-import unittest
-
 from colorama import init
-
 init()
+import time
+import unittest
 from termcolor import colored
+
 
 class GameRoom:
     def __init__(self):
         self.boards = []
+
     def initialize_from_file(self, filename):
         with open(filename, 'r') as f:
             text = f.read()
@@ -15,6 +16,14 @@ class GameRoom:
             gb = GameBoard()
             gb.initialize_from_text_grid(t)
             self.boards.append(gb)
+
+    def call_out(self, number):
+        bingos = []
+        for i, gb in enumerate(self.boards):
+            if gb.handle_call(number):
+                if gb.is_winner():
+                    bingos.append(gb)
+        return bingos
 
 
 class GameBoard:
@@ -45,7 +54,7 @@ class GameBoard:
     def initialize_from_text_grid(self, text_grid):
         text_grid = text_grid.strip()
         parsed_text_grid = text_grid.replace('\n', ' ').replace('  ', ' ').split(' ')
-        if (len(parsed_text_grid) != 25):
+        if len(parsed_text_grid) != 25:
             raise Exception(f'Text grid wrong length ({len(parsed_text_grid)}) expected 25')
         row, col = 0, 0
         for x in parsed_text_grid:
@@ -116,11 +125,11 @@ class TestGameBoard(unittest.TestCase):
     def setUp(self):
         self.gb = GameBoard()
         self.gb.initialize_from_text_grid(
-"""66 78  7 45 92
-39 38 62 81 77
-9 73 25 97 99
-87 80 19  1 71
-85 35 52 26 68""")
+            "66 78  7 45 92\n"
+            "39 38 62 81 77\n"
+            "9 73 25 97 99\n"
+            "87 80 19  1 71\n"
+            "85 35 52 26 68")
 
     def test_game_board(self):
         self.assertEqual(0, str(self.gb).find('GameBoard'))
@@ -175,12 +184,12 @@ class TestGameBoard(unittest.TestCase):
         self.gb.board[3][1].marked = True
         self.gb.board[4][0].marked = True
         self.assertTrue(self.gb.is_winner())
-        print(self.gb)
 
 
 class TestTile(unittest.TestCase):
     def test_tile(self):
         self.assertEqual(0, str(Tile()).find('Tile'))
+
 
 class TestGameRoom(unittest.TestCase):
     def test_game_room(self):
@@ -188,6 +197,17 @@ class TestGameRoom(unittest.TestCase):
         gr.initialize_from_file('bingo_boards.txt')
         self.assertEqual(100, len(gr.boards))
         self.assertEqual(66, gr.boards[0].board[0][0].number)
+
+    def test_call_out(self):
+        gr = GameRoom()
+        gr.initialize_from_file('bingo_boards.txt')
+        numbers = [66, 78, 7, 45, 92]
+        for i, n in enumerate(numbers):
+            bingos = gr.call_out(n)
+            if i < 4:
+                self.assertFalse(bingos)
+            else:
+                self.assertTrue(bingos)
 
 if __name__ == '__main__':
     unittest.main()
