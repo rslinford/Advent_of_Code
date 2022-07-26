@@ -1,6 +1,6 @@
 from colorama import init
+
 init()
-import time
 import unittest
 from termcolor import colored
 
@@ -40,6 +40,7 @@ class GameRoom:
                 if board.is_winner():
                     return board
         return None
+
 
 class GameBoard:
     def __init__(self):
@@ -92,7 +93,7 @@ class GameBoard:
                     self.board[row][col].marked = True
                     if self.is_winner():
                         self.winning_number = tile_number
-                    return True # True if tile was marked
+                    return True  # True if tile was marked
         return False
 
     def is_winner(self):
@@ -143,6 +144,7 @@ class GameBoard:
                 if not self.board[row][col].marked:
                     sum += self.board[row][col].number
         return self.winning_number * sum
+
 
 class Tile:
     def __init__(self, number=0, marked=False):
@@ -265,6 +267,7 @@ class TestGameRoom(unittest.TestCase):
         self.assertEqual(37, gr.callouts[0])
         self.assertEqual(60, gr.callouts[1])
         self.assertEqual(79, gr.callouts[-1])
+
 
 if __name__ == '__main__':
     unittest.main()
