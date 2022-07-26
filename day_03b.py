@@ -70,7 +70,7 @@ def tally_the_digits_in_memory(diag_list, digit_width):
     return dt
 
 
-def translate_tally_to_binary_string_value(digit_tally, tie_char):
+def translate_tally_to_binary_string_value(digit_tally):
     digits = []
     for i in range(len(digit_tally)):
         if digit_tally[i][0] > digit_tally[i][1]:
@@ -78,9 +78,8 @@ def translate_tally_to_binary_string_value(digit_tally, tie_char):
         elif digit_tally[i][0] < digit_tally[i][1]:
             digits.append('1')
         else:
-            # Tie goes to 1 for oxygen generator rating
-            # and to 0 for CO scrubber rating.
-            digits.append(tie_char)
+            # Tie goes to 1
+            digits.append('1')
     return ''.join(digits)
 
 
@@ -133,13 +132,13 @@ class TestDiagnostics(unittest.TestCase):
 
         self.assertEqual(7, dt[4][0])
         self.assertEqual(5, dt[4][1])
-        value = int(translate_tally_to_binary_string_value(dt, '1'), 2)
+        value = int(translate_tally_to_binary_string_value(dt), 2)
         self.assertEqual(22, value)
         return value
 
     def test_translate_tally_to_decimal_value(self):
         tally = [[5, 7], [7, 5], [4, 8], [5, 7], [7, 5]]  # 10110 -> 22
-        value = int(translate_tally_to_binary_string_value(tally, '1'), 2)
+        value = int(translate_tally_to_binary_string_value(tally), 2)
         self.assertEqual(22, value)
 
     def test_flip_bits(self):
@@ -165,27 +164,27 @@ class TestDiagnostics(unittest.TestCase):
     def test_run(self):
         diags = load_all_diagnostics('diagnostic_03.txt')
         dt = tally_the_digits_in_memory(diags, 12)
-        bsv = translate_tally_to_binary_string_value(dt, '1')
+        bsv = translate_tally_to_binary_string_value(dt)
         for i in range(len(bsv)):
             diags = filter_by_bit(diags, bsv[i], i, False)
             if len(diags) < 2:
                 break
             dt = tally_the_digits_in_memory(diags, 12)
-            bsv = translate_tally_to_binary_string_value(dt, '1')
+            bsv = translate_tally_to_binary_string_value(dt)
         if len(diags) != 1:
             raise Exception(f'Was expecting len of 1 but found {len(diags)}')
         oxygen_generator_rating = int(diags[0], 2)
-        # self.assertEqual(23, oxygen_generator_rating)
+        self.assertEqual(23, oxygen_generator_rating)
 
         diags = load_all_diagnostics('diagnostic_short_03.txt')
         dt = tally_the_digits_in_memory(diags, 5)
-        bsv = translate_tally_to_binary_string_value(dt, '1')
+        bsv = translate_tally_to_binary_string_value(dt)
         for i in range(len(bsv)):
             diags = filter_by_bit(diags, bsv[i], i, True)
             if len(diags) < 2:
                 break
             dt = tally_the_digits_in_memory(diags, 5)
-            bsv = translate_tally_to_binary_string_value(dt, '1')
+            bsv = translate_tally_to_binary_string_value(dt)
         if len(diags) != 1:
             raise Exception(f'Was expecting len of 1 but found {len(diags)}')
         co2_scrubber_rating = int(diags[0], 2)
