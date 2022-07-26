@@ -41,6 +41,18 @@ class GameRoom:
                     return board
         return None
 
+    def play_to_the_last_winner(self, boards_filename, callout_filename):
+        self.initialize_boards_from_file(boards_filename)
+        self.initialize_callout_list_from_file(callout_filename)
+        last_winner = None
+        for call in self.callouts:
+            for board in self.boards:
+                if not board.winning_number:
+                    board.handle_call(call)
+                    if board.is_winner():
+                        last_winner = board
+        return last_winner
+
 
 class GameBoard:
     def __init__(self):
@@ -259,7 +271,13 @@ class TestGameRoom(unittest.TestCase):
         gr = GameRoom()
         winner = gr.play('bingo_boards.txt', 'bingo_calls.txt')
         self.assertTrue(winner)
+
+    def test_play_to_the_last_winner(self):
+        gr = GameRoom()
+        winner = gr.play_to_the_last_winner('bingo_boards.txt', 'bingo_calls.txt')
+        self.assertTrue(winner)
         print(winner)
+
 
     def test_initialize_callout_list_from_file(self):
         gr = GameRoom()
