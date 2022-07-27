@@ -10,7 +10,8 @@ class GridBoard:
     def __repr__(self):
         return self.render_grid()
 
-    def initialize_grid_from_file(self, filename, include_diagonals = False):
+    def initialize_grid_from_file(self, filename, include_diagonals=False):
+        self.reset_grid()
         with open(filename, 'r') as f:
             for text_line in f:
                 text_line = text_line.strip()
@@ -19,7 +20,6 @@ class GridBoard:
                 if line.is_diagonal() and not include_diagonals:
                     continue
                 self.draw_line_on_grid(line)
-
 
     def reset_grid(self):
         self.grid = [[0 for _ in range(self.size)] for _ in range(self.size)]
@@ -65,6 +65,15 @@ class GridBoard:
             if x == line.x2 and y == line.y2:
                 return
 
+    def calculate_grid_score(self):
+        score = 0
+        for row in self.grid:
+            for value in row:
+                if value > 1:
+                    score += 1
+        return score
+
+
 class Line:
     def __init__(self):
         self.x1, self.y1, self.x2, self.y2 = 0, 0, 0, 0
@@ -90,6 +99,28 @@ class Line:
 
 
 class TestGridBoard(unittest.TestCase):
+    def setUp(self):
+        self.short_rendered_gridboard = (".......1..\n"
+                                         "..1....1..\n"
+                                         "..1....1..\n"
+                                         ".......1..\n"
+                                         ".112111211\n"
+                                         "..........\n"
+                                         "..........\n"
+                                         "..........\n"
+                                         "..........\n"
+                                         "222111....\n")
+        self.short_rendered_gridboard_diagonal = ("1.1....11.\n"
+                                                  ".111...2..\n"
+                                                  "..2.1.111.\n"
+                                                  "...1.2.2..\n"
+                                                  ".112313211\n"
+                                                  "...1.2....\n"
+                                                  "..1...1...\n"
+                                                  ".1.....1..\n"
+                                                  "1.......1.\n"
+                                                  "222111....\n")
+
     def test_init(self):
         gb = GridBoard(10)
         self.assertEqual(10, gb.size)
@@ -98,17 +129,9 @@ class TestGridBoard(unittest.TestCase):
     def test_initialize_grid_from_file(self):
         gb = GridBoard(10)
         gb.initialize_grid_from_file('vent_lines_short.txt')
-        gameboard_rendered = (".......1..\n"
-                              "..1....1..\n"
-                              "..1....1..\n"
-                              ".......1..\n"
-                              ".112111211\n"
-                              "..........\n"
-                              "..........\n"
-                              "..........\n"
-                              "..........\n"
-                              "222111....\n")
-        self.assertEqual(gameboard_rendered, str(gb))
+        self.assertEqual(self.short_rendered_gridboard, str(gb))
+        gb.initialize_grid_from_file('vent_lines_short.txt', include_diagonals=True)
+        self.assertEqual(self.short_rendered_gridboard_diagonal, str(gb))
 
     def test_reset_grid(self):
         gb = GridBoard(10)
@@ -125,6 +148,16 @@ class TestGridBoard(unittest.TestCase):
         gb.grid[0][0] = 1
         gb.grid[2][2] = 2
         self.assertEqual('1..\n...\n..2\n', gb.render_grid())
+
+    def test_calculate_grid_score(self):
+        gb = GridBoard(10)
+        gb.initialize_grid_from_file('vent_lines_short.txt')
+        self.assertEqual(5, gb.calculate_grid_score())
+
+    def test_for_real_this_time(self):
+        gb = GridBoard(1000)
+        gb.initialize_grid_from_file('vent_lines.txt')
+        print(gb.calculate_grid_score())
 
 
 class TestLine(unittest.TestCase):
@@ -163,6 +196,7 @@ class TestLine(unittest.TestCase):
         self.assertFalse(line.is_diagonal())
         line.x1, line.y1, line.x2, line.y2 = 0, 0, 3, 3
         self.assertTrue(line.is_diagonal())
+
 
 if __name__ == '__main__':
     unittest.main()
