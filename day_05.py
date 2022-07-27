@@ -156,7 +156,7 @@ class TestGridBoard(unittest.TestCase):
 
     def test_for_real_this_time(self):
         gb = GridBoard(1000)
-        gb.initialize_grid_from_file('vent_lines.txt')
+        gb.initialize_grid_from_file('vent_lines.txt', include_diagonals=True)
         print(gb.calculate_grid_score())
 
 
