@@ -6,6 +6,7 @@ with open('fish.txt', 'r') as f:
 fish = [int(x) for x in text.split(',')]
 fish_short = [3, 4, 3, 1, 2]
 
+
 def naive_solution():
     print(f'Initial: {fish}')
     for day in range(1, 257):
@@ -23,11 +24,8 @@ def naive_solution():
 def def_value():
     return 0
 
-d = defaultdict(def_value)
-#  1,740,449,478,328
-#  1,639,854,996,917
-#     26,984,457,539
 
+d = defaultdict(def_value)
 
 #  Populate dictionary with data from file
 for x in fish:
