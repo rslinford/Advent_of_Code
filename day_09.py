@@ -7,6 +7,7 @@ from termcolor import colored
 
 visited = set()
 low_points = set()
+basin = set()
 
 
 def render_height_map(height_map, yar=None, been_there=None, lows=None):
@@ -26,7 +27,7 @@ def render_height_map(height_map, yar=None, been_there=None, lows=None):
     return ''.join(rval)
 
 
-def visit(height_map, x, y):
+def visit_following_the_down(height_map, x, y):
     if (x, y) in visited:
         return
     visited.add((x, y))
@@ -37,22 +38,45 @@ def visit(height_map, x, y):
     visited_elsewhere = False
     # Up
     if y > 0 and height_map[y - 1][x] <= height_map[y][x]:
-        visit(height_map, x, y - 1)
+        visit_following_the_down(height_map, x, y - 1)
         visited_elsewhere = True
     # Down
     if y < height - 1 and height_map[y + 1][x] <= height_map[y][x]:
-        visit(height_map, x, y + 1)
+        visit_following_the_down(height_map, x, y + 1)
         visited_elsewhere = True
     # Left
     if x > 0 and height_map[y][x - 1] <= height_map[y][x]:
-        visit(height_map, x - 1, y)
+        visit_following_the_down(height_map, x - 1, y)
         visited_elsewhere = True
     # Right
     if x < width - 1 and height_map[y][x + 1] <= height_map[y][x]:
-        visit(height_map, x + 1, y)
+        visit_following_the_down(height_map, x + 1, y)
         visited_elsewhere = True
     if not visited_elsewhere:
         low_points.add((x,y))
+
+
+def visit_following_the_up(height_map, x, y):
+    if (x, y) in visited:
+        return
+    visited.add((x, y))
+    print(f'first time at {(x, y)}')
+    if x % 50 == 0:
+        print(render_height_map(height_map, (x, y), basin, low_points))
+    if height_map[y][x] != 9:
+        basin.add((x,y))
+    # Up
+    if y > 0 and height_map[y - 1][x] >= height_map[y][x]:
+        visit_following_the_up(height_map, x, y - 1)
+    # Down
+    if y < height - 1 and height_map[y + 1][x] >= height_map[y][x]:
+        visit_following_the_up(height_map, x, y + 1)
+    # Left
+    if x > 0 and height_map[y][x - 1] >= height_map[y][x]:
+        visit_following_the_up(height_map, x - 1, y)
+    # Right
+    if x < width - 1 and height_map[y][x + 1] >= height_map[y][x]:
+        visit_following_the_up(height_map, x + 1, y)
 
 
 short = False
@@ -72,7 +96,7 @@ height = len(height_map)
 
 for y, row in enumerate(height_map):
     for x, value in enumerate(row):
-        visit(height_map, x, y)
+        visit_following_the_down(height_map, x, y)
         # time.sleep(0.2)
 print(low_points)
 
@@ -80,3 +104,17 @@ score = 0
 for p in low_points:
     score += height_map[p[1]][p[0]] + 1
 print(score)
+# time.sleep(5.2)
+
+
+basin_list = []
+for p in low_points:
+    visited.clear()
+    basin.clear()
+    visit_following_the_up(height_map, p[0], p[1])
+    basin_list.append(basin.copy())
+basin_list.sort(key=len, reverse=True)
+
+score = len(basin_list[0]) * len(basin_list[1]) * len(basin_list[2])
+print(f'The result is {score}')
+
