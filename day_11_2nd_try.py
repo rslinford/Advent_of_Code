@@ -1,24 +1,20 @@
-import time
-import unittest
-
+from colorama import init
+init()
 from termcolor import colored
+import unittest
 
 short = True
 filename = 'octopus_short.txt' if short else 'octopus.txt'
 
 
-def read_octopus_grid():
+def read_octopus_grid(filename_override = None):
     octopus_grid = []
-    with open(filename, 'r') as f:
+    a = filename_override if filename_override else filename
+    with open(a, 'r') as f:
         for line in f:
             line = line.strip()
             octopus_grid.append([int(c) for c in line])
     return octopus_grid
-
-
-og = read_octopus_grid()
-width = len(og[0])
-height = len(og)
 
 
 def render_octopus_grid(grid, been_flashed=None, yar=None):
@@ -39,8 +35,6 @@ def increase_by_one(og):
     for y, row in enumerate(og):
         for x, value in enumerate(row):
             og[y][x] += 1
-            # if og[y][x] > 9:
-            #     og[y][x] = 0
 
 
 class Coordinates:
@@ -59,14 +53,18 @@ class Coordinates:
 
 
 def flash_one(og, coor, been_flashed):
+    width = len(og[0])
+    height = len(og)
+
     if coor in been_flashed:
         return False
+
     been_flashed.add(coor)
     #  Up
     if coor.y > 0:
         og[coor.y - 1][coor.x] += 1
     # Down
-    if coor.y < width - 1:
+    if coor.y < height - 1:
         og[coor.y + 1][coor.x] += 1
     # Left
     if coor.x > 0:
@@ -88,10 +86,19 @@ def flash_one(og, coor, been_flashed):
         og[coor.y - 1][coor.x - 1] += 1
     return True
 
+
+def simultaneous_flash_detection(og):
+    for y, row in enumerate(og):
+        for x, value in enumerate(row):
+            if og[y][x] != 0:
+                return False
+    return True
+
+
 def flash(og):
     been_flashed = set()
-    # Flash all that are over
-
+    flash_count = 0
+    # Flash all that are over the limit
     while True:
         nothing_happened_this_round = True
         for y, row in enumerate(og):
@@ -100,7 +107,9 @@ def flash(og):
                     coor = Coordinates(x,y)
                     if flash_one(og, coor, been_flashed):
                         nothing_happened_this_round = False
-                    # print(f'After flash {coor}\n{render_octopus_grid(og, been_flashed, coor)}')
+                        flash_count += 1
+                    if flash_count % 10 == 0:
+                        print(f'After flash {coor}\n{render_octopus_grid(og, been_flashed, coor)}')
         if nothing_happened_this_round:
             break
         else:
@@ -109,7 +118,10 @@ def flash(og):
     # Reset all that have been_flashed
     for coor in been_flashed:
         og[coor.y][coor.x] = 0
-    print(f'After reset\n{render_octopus_grid(og, been_flashed)}')
+
+    if simultaneous_flash_detection(og):
+        print(f'After simultaneous flash {coor}\n{render_octopus_grid(og, been_flashed, coor)}')
+    return flash_count
 
 
 class TestOctopus(unittest.TestCase):
@@ -146,6 +158,39 @@ class TestOctopus(unittest.TestCase):
                          "  4  0  0  0  4\n"
                          "  3  4  5  4  3\n", render_octopus_grid(og))
 
+    # def xtest_100_generations(self):
+    #     og = read_octopus_grid('octopus_less_short.txt')
+    #     print(f'Starting with\n{render_octopus_grid(og)}')
+    #
+    #     total_flashes = 0
+    #     for generation in range(1, 101):
+    #         increase_by_one(og)
+    #         total_flashes += flash(og)
+    #         print(f'After generation {generation} total flashes {total_flashes}\n{render_octopus_grid(og)}')
+    #     self.assertEqual("  0  3  9  7  6  6  6  8  6  6\n"
+    #                      "  0  7  4  9  7  6  6  9  1  8\n"
+    #                      "  0  0  5  3  9  7  6  9  3  3\n"
+    #                      "  0  0  0  4  2  9  7  8  2  2\n"
+    #                      "  0  0  0  4  2  2  9  8  9  2\n"
+    #                      "  0  0  5  3  2  2  2  8  7  7\n"
+    #                      "  0  5  3  2  2  2  2  9  6  6\n"
+    #                      "  9  3  2  2  2  2  8  9  6  6\n"
+    #                      "  7  9  2  2  2  8  6  8  6  6\n"
+    #                      "  6  7  8  9  9  9  8  7  6  6\n", render_octopus_grid(og))
+    #     self.assertEqual(1656, total_flashes)
+
+    def test_the_big_one(self):
+        og = read_octopus_grid('octopus.txt')
+        print(f'Starting with\n{render_octopus_grid(og)}')
+
+        total_flashes = 0
+        for generation in range(1, 300):
+            increase_by_one(og)
+            total_flashes += flash(og)
+            print(f'After generation {generation} total flashes {total_flashes}\n{render_octopus_grid(og)}')
+
 
 if __name__ == '__main__':
     unittest.main()
+
+
