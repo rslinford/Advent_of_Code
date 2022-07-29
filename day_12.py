@@ -3,6 +3,7 @@ import unittest
 
 class CaveSystem:
     def __init__(self):
+        self.path_list = {}
         self.start = Cave('start')
         self.end = Cave('end')
         self.caves = {self.start.name: self.start, self.end.name: self.end}
@@ -37,19 +38,31 @@ class CaveSystem:
             visited[name] = 1
         if not self.caves[name].deja_vu_allowed() and visited[name] > 1:
             return
+        # Begin Visit
 
         path.append(name)
+        print(f'Now at {self.caves[name]}  path {self.compose_path(path)}')
         if name == 'end':
-            print('We have arrived.')
-            return
+            p = self.compose_path(path)
+            if p in self.path_list.keys():
+                self.path_list[p] += 1
+                print(f'Already been down {p} {self.path_list[p]} times')
+            else:
+                self.path_list[p] = 1
+                print(f'New path found {p}')
 
         # Begin exploration
-        print(f'Exploring {self.caves[name]}  path {path}')
-        for cave in self.caves[name].neighbors.values():
-            self.visit(cave.name, visited, path)
+        print(f'Begin Exploring {self.caves[name]}  path {self.compose_path(path)}')
+        for cave in self.caves[name].neighbors.keys():
+            self.visit(cave, visited, path)
+        print(f'Done Exploring {self.caves[name]}  {self.compose_path(path)}')
 
     def traverse(self):
         self.visit(self.start.name, dict(), [])
+
+    def compose_path(self, path):
+        return ','.join(path)
+
 
 def load_cave_system_from_file(filename):
     cs = CaveSystem()
