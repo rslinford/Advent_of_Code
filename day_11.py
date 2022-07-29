@@ -1,3 +1,4 @@
+import time
 import unittest
 
 short = True
@@ -55,39 +56,50 @@ def increase_adjacent_by_one(og, coor, been_there=None):
     if coor.y > 0:
         og[coor.y - 1][coor.x] += 1
         if og[coor.y - 1][coor.x] > 9:
-            increase_adjacent_by_one(coor.y - 1, coor.x, been_there)
+            og[coor.y - 1][coor.x] = 0
+            increase_adjacent_by_one(og, Coordinates(coor.y - 1, coor.x), been_there)
     # Down
     if coor.y < height - 1:
         og[coor.y + 1][coor.x] += 1
         if og[coor.y + 1][coor.x] > 9:
-            increase_adjacent_by_one(coor.y + 1, coor.x, been_there)
-
+            og[coor.y + 1][coor.x] = 0
+            increase_adjacent_by_one(og, Coordinates(coor.y + 1, coor.x), been_there)
     # Left
     if coor.x > 0:
         og[coor.y][coor.x - 1] += 1
         if og[coor.y][coor.x - 1] > 9:
-            increase_adjacent_by_one(coor.y, coor.x - 1, been_there)
+            og[coor.y][coor.x - 1] = 0
+            increase_adjacent_by_one(og, Coordinates(coor.y, coor.x - 1), been_there)
     # Right
     if coor.x < width - 1:
         og[coor.y][coor.x + 1] += 1
         if og[coor.y][coor.x + 1] > 9:
-            increase_adjacent_by_one(coor.y, coor.x + 1, been_there)
-
-
-been_there = set()
-og = read_octopus_grid()
-
-#  1) octopus energies increase by 1
-increase_by_one(og)
-#  2) Any octopus greater than 9 flashes. A value of 0 is 'greater' because it stands for 10 at this point.
-for y, row in enumerate(og):
-    for x, value in enumerate(row):
-        if og[y][x] == 0:
-            increase_adjacent_by_one(og, Coordinates(x, y), been_there)
-
-#  3) Adjacent octopuses increase by 1
-#  4) Propagate flash adjacently with cycle detection
-#  5) Octopuses that flashed set to 0
+            og[coor.y][coor.x + 1] = 0
+            increase_adjacent_by_one(og, Coordinates(coor.y, coor.x + 1), been_there)
+    # Up and Right
+    if coor.y > 0 and coor.x < width - 1:
+        og[coor.y - 1][coor.x + 1] += 1
+        if og[coor.y - 1][coor.x + 1] > 9:
+            og[coor.y - 1][coor.x + 1] = 0
+            increase_adjacent_by_one(og, Coordinates(coor.y - 1, coor.x + 1), been_there)
+    # Down and Right
+    if coor.y < height - 1 and coor.x < width - 1:
+        og[coor.y + 1][coor.x + 1] += 1
+        if og[coor.y + 1][coor.x + 1] > 9:
+            og[coor.y + 1][coor.x + 1] = 0
+            increase_adjacent_by_one(og, Coordinates(coor.y + 1, coor.x + 1), been_there)
+    # Down and Left
+    if coor.y < height - 1 and coor.x > 0:
+        og[coor.y + 1][coor.x - 1] += 1
+        if og[coor.y + 1][coor.x - 1] > 9:
+            og[coor.y + 1][coor.x - 1] = 0
+            increase_adjacent_by_one(og, Coordinates(coor.y + 1, coor.x - 1), been_there)
+    # Up and Left
+    if coor.y > 0 and coor.x > 0:
+        og[coor.y - 1][coor.x - 1] += 1
+        if og[coor.y - 1][coor.x - 1] > 9:
+            og[coor.y - 1][coor.x - 1] = 0
+            increase_adjacent_by_one(og, Coordinates(coor.y - 1, coor.x - 1), been_there)
 
 
 class TestOctopus(unittest.TestCase):
@@ -115,3 +127,31 @@ class TestCoordinates(unittest.TestCase):
         self.assertEqual(Coordinates(1, 33), Coordinates(1, 33))
         self.assertNotEqual(Coordinates(2, 33), Coordinates(1, 33))
         self.assertNotEqual(Coordinates(1, 34), Coordinates(1, 33))
+
+
+been_there = set()
+og = read_octopus_grid()
+i = 0
+print(f'Starting with {i}\n{render_octopus_grid(og)}')
+while True:
+    been_there.clear()
+    #  1) octopus energies increase by 1
+    increase_by_one(og)
+    print(f'After increase by one {i}\n{render_octopus_grid(og)}')
+    #  2) Any octopus greater than 9 flashes. A value of 0 is 'greater' because it stands for 10 at this point.
+    for y, row in enumerate(og):
+        for x, value in enumerate(row):
+            if og[y][x] == 0:
+                increase_adjacent_by_one(og, Coordinates(x, y), been_there)
+    i += 1
+    print(f'After Day {i}\n{render_octopus_grid(og)}')
+    assert("34543\n"
+           "40004\n"
+           "50005\n"
+           "40004\n"
+           "34543" == render_octopus_grid(og))
+    time.sleep(0.5)
+    #  3) Adjacent octopuses increase by 1
+    #  4) Propagate flash adjacently with cycle detection
+#  5) Octopuses that flashed set to 0
+
